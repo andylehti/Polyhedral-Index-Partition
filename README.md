@@ -2,12 +2,16 @@
 
 # The Polyhedral Index Partition (PIP) and the Discovery of Pascal's Dimensions: Enabling Computational Retrieval and Reversibility in High-Index Partition Arrays
 
+
+Listen to the paper: [here](https://studio.youtube.com/video/iScC_nTA0EI/edit)
+
+---
+
 Author: **Andrew Lehti**
 
 Disciplines: Cognitive Psychology, Linguistics, Mathematics, and their Histories
 
 DOI: [10.6084/m9.figshare.27642783](https://doi.org/10.6084/m9.figshare.27642783)
-
 
 ## Abstract
 
