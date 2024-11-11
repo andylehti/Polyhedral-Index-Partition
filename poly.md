@@ -76,6 +76,10 @@ Pascal’s Dimensions and Laterals reveal inherent symmetries and patterns that 
 
 ---
 
+![Visualization of Pascal's Dimension](https://github.com/andylehti/Polyhedral-Index-Partition/blob/main/pascal%27s%20dimension.png?raw=true)
+
+---
+
 ### Lateral Values Across Dimensions
 
 To illustrate the relationship between dimensions and laterals, consider the following array of values, where each entry represents the number of combinations in each Pascal Lateral across different Pascal Dimensions:
