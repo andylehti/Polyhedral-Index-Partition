@@ -3,7 +3,7 @@
 # The Polyhedral Index Partition (PIP) and the Discovery of Pascal's Dimensions: Enabling Computational Retrieval and Reversibility in High-Index Partition Arrays
 
 
-Listen to the paper: [here](https://studio.youtube.com/video/iScC_nTA0EI/edit)
+Listen to the paper: [here](https://youtu.be/iScC_nTA0EI)
 
 ---
 
