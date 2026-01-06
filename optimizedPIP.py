@@ -156,11 +156,11 @@ def old_inversePartition(*c):
 import random
 import time
 
-def timerTest(e = 0, n = 20):
+def timerTest(e = 0, n = 100):
     tests = [
         (
             random.randint(10 ** (d - 1), 10 ** d - 1),
-            random.randint(2, 2 ** 12)
+            random.randint(2, 2 ** 16)
         )
         for d in (random.randint(1, 100) for _ in range(n))
     ]
