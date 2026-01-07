@@ -18,17 +18,40 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        input {
+        input, select {
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             transition: all 0.2s ease;
         }
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #38bdf8;
             box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
         }
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            margin-top: -8px; 
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+        
         .coord-pill {
             display: inline-flex;
             align-items: center;
@@ -60,22 +83,65 @@
             font-family: Arial, Helvetica, sans-serif;
         }
         
+        .btn-tab {
+            transition: all 0.3s ease;
+        }
+        .btn-tab-active-sky {
+            background-color: #0284c7; /* sky-600 */
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(12, 74, 110, 0.2);
+        }
+        .btn-tab-active-emerald {
+            background-color: #059669; /* emerald-600 */
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.2);
+        }
+        .btn-tab-active-violet {
+            background-color: #7c3aed; /* violet-600 */
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(76, 29, 149, 0.2);
+        }
+        .btn-tab-inactive {
+            color: #94a3b8; /* slate-400 */
+        }
+        .btn-tab-inactive:hover {
+            color: white;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            display: none; /* Hidden by default */
+            margin-top: 1rem;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #d97706; /* amber-600 */
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
         /* Hide scrollbar but allow scrolling */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-5xl mx-auto">
         <header class="mb-8 text-center">
-            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400 mb-2">Polyhedral Indexer</h1>
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 mb-2">Polyhedral Indexer</h1>
             <p class="text-slate-400 max-w-lg mx-auto">Efficiently map multidimensional coordinate arrays to unique natural number indices.</p>
         </header>
 
         <!-- Navigation Tabs -->
-        <div class="flex space-x-1 mb-8 bg-slate-800/40 p-1.5 rounded-2xl w-fit mx-auto border border-white/5">
-            <button id="tab-from" onclick="switchTab('from')" class="px-8 py-2.5 rounded-xl font-semibold transition-all bg-sky-600 text-white shadow-lg shadow-sky-900/20">Coords ➔ Index</button>
-            <button id="tab-to" onclick="switchTab('to')" class="px-8 py-2.5 rounded-xl font-semibold transition-all text-slate-400 hover:text-white">Index ➔ Coords</button>
+        <div class="flex flex-wrap justify-center gap-2 mb-8 bg-slate-800/40 p-1.5 rounded-2xl w-fit mx-auto border border-white/5">
+            <button id="tab-from" onclick="switchTab('from')" class="px-6 py-2.5 rounded-xl font-semibold btn-tab btn-tab-active-sky">Coords ➔ Index</button>
+            <button id="tab-to" onclick="switchTab('to')" class="px-6 py-2.5 rounded-xl font-semibold btn-tab btn-tab-inactive">Index ➔ Coords</button>
+            <button id="tab-demo" onclick="switchTab('demo')" class="px-6 py-2.5 rounded-xl font-semibold btn-tab btn-tab-inactive">Demo</button>
         </div>
 
         <!-- Coords to Index Screen -->
@@ -138,7 +204,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Dimensions (d)</label>
-                        <input type="number" id="input-d" class="w-full p-4 rounded-2xl mono text-xl font-bold" placeholder="1" value="2" min="1">
+                        <input type="number" id="input-d" class="w-full p-4 rounded-2xl mono text-xl font-bold" placeholder="1" value="2" min="1" max="9999" oninput="if(this.value>9999)this.value=9999">
                     </div>
                 </div>
                 <div class="mt-8 flex items-center space-x-6 border-t border-white/5 pt-6">
@@ -160,10 +226,105 @@
                     <div class="mt-10 border-t border-white/5 pt-8">
                         <h3 class="font-bold text-slate-200 mb-6 flex items-center">
                             <svg class="w-4 h-4 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                            Partitioning Steps
+                            Algorithm Trace
                         </h3>
                         <div id="to-steps" class="space-y-3"></div>
+                        <div id="to-steps-hidden" class="hidden space-y-3"></div>
+                        <button id="btn-show-more" onclick="toggleSteps()" class="hidden w-full py-2 text-sm font-bold text-emerald-400 bg-emerald-400/10 rounded-xl hover:bg-emerald-400/20 transition-colors">Show More Steps</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Mode Screen -->
+        <div id="screen-demo" class="hidden space-y-8">
+            <!-- Animation Section -->
+            <div class="glass p-8 rounded-3xl shadow-2xl border-t-4 border-violet-500">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-violet-300">Live Counting Animation</h2>
+                    <div class="flex items-center space-x-2">
+                         <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" id="demo-indicator" style="display:none;"></div>
+                         <span class="text-xs uppercase font-bold text-slate-500" id="demo-status">Stopped</span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Dimensions</label>
+                        <input type="number" id="demo-d" class="w-full p-2 rounded-lg mono font-bold bg-slate-800" value="3" min="1" max="9999" oninput="if(this.value>9999)this.value=9999" onchange="resetDemo()">
+                    </div>
+                    <div class="flex items-end pb-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="demo-signed" class="w-5 h-5 rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-800" onchange="updateDemoDisplay()">
+                            <span class="text-sm font-semibold text-slate-300">Signed Mode</span>
+                        </label>
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Speed (0-5)</label>
+                        <input type="range" id="demo-speed" min="0" max="5" value="1" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>Slow</span>
+                            <span>Fast</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Play/Pause Button -->
+                <button id="btn-play" onclick="toggleDemo()" class="w-full py-4 rounded-xl font-bold text-lg bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/40 transition-all flex justify-center items-center space-x-2">
+                    <svg id="icon-play" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="icon-pause" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <span id="btn-play-text">Start Counting</span>
+                </button>
+
+                <!-- Display -->
+                <div class="mt-8 p-6 bg-slate-900/50 rounded-2xl border border-violet-500/20 text-center">
+                    <div class="font-mono text-3xl md:text-5xl text-violet-300 font-bold mb-4 break-words" id="demo-output">
+                        k = 0
+                    </div>
+                    <div class="font-mono text-lg md:text-2xl text-emerald-400 break-words mb-4" id="demo-coords">
+                        [0, 0, 0]
+                    </div>
+                    <div class="text-sm text-slate-500 uppercase tracking-widest font-bold">
+                        Array Sum: <span id="demo-sum" class="text-slate-300">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CSV Export Section -->
+            <div class="glass p-8 rounded-3xl shadow-2xl border-t-4 border-amber-500">
+                <h2 class="text-xl font-bold text-amber-300 mb-6">Bulk Export to CSV</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                     <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Dimensions</label>
+                        <input type="number" id="csv-d" class="w-full p-3 rounded-xl mono font-bold bg-slate-800" value="3" min="1" max="9999" oninput="if(this.value>9999)this.value=9999">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Start Index (x)</label>
+                        <input type="number" id="csv-start" class="w-full p-3 rounded-xl mono font-bold bg-slate-800" value="0" min="0">
+                    </div>
+                     <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">End Index (y)</label>
+                        <input type="number" id="csv-end" class="w-full p-3 rounded-xl mono font-bold bg-slate-800" value="100" min="0">
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 mb-6">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" id="csv-signed" class="w-5 h-5 rounded border-slate-600 text-amber-500 focus:ring-amber-500 bg-slate-800">
+                        <span class="text-sm font-semibold text-slate-300">Signed Mode</span>
+                    </label>
+                </div>
+                
+                <div class="space-y-4">
+                    <button id="btn-csv" onclick="downloadCSV()" class="w-full py-4 rounded-xl font-bold text-lg bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-900/40 transition-all flex justify-center items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span id="btn-csv-text">Download CSV</span>
+                    </button>
+                    
+                    <div id="csv-progress-container" class="progress-bar-container">
+                        <div id="csv-progress-fill" class="progress-bar-fill"></div>
+                    </div>
+                    <div id="csv-status" class="text-xs text-center text-amber-400 font-mono hidden">Processing...</div>
                 </div>
             </div>
         </div>
@@ -191,36 +352,73 @@
     <script>
         /** Logic Core **/
         function nCr(n, r) {
-            if (r < 0 || r > n) return 0n;
-            if (r === 0 || r === n) return 1n;
-            if (r > n / 2) r = n - r;
+            n = BigInt(n);
+            r = BigInt(r);
+            if (r < 0n || r > n) return 0n;
+            if (r === 0n || r === n) return 1n;
+            if (r > n / 2n) r = n - r;
             let num = 1n, den = 1n;
-            for (let i = 1n; i <= BigInt(r); i++) {
-                num *= (BigInt(n) - i + 1n);
+            for (let i = 1n; i <= r; i++) {
+                num *= (n - i + 1n);
                 den *= i;
             }
             return num / den;
         }
 
         function polyHedralIndex(x, y) {
-            return (y < 1 || x < 0) ? 0n : nCr(x + y - 1, y);
+            const xBig = BigInt(x);
+            const yBig = BigInt(y);
+            if (yBig < 1n || xBig < 0n) return 0n;
+            return nCr(xBig + yBig - 1n, yBig);
         }
 
-        function zigzagEncode(z) { return z >= 0 ? 2 * z : -2 * z - 1; }
-        function zigzagDecode(n) { return n % 2 === 0 ? n / 2 : -(Math.floor(n / 2) + 1); }
+        function zigzagEncode(z) { 
+            const zBig = BigInt(z);
+            return zBig >= 0n ? 2n * zBig : -2n * zBig - 1n; 
+        }
+        
+        function zigzagDecode(n) { 
+            const nBig = BigInt(n);
+            return nBig % 2n === 0n ? nBig / 2n : -(nBig / 2n) - 1n; 
+        }
 
         function approximate(n, t) {
             n = BigInt(n);
-            if (n === 0n) return 0;
+            if (n === 0n) return 0n;
             let low = 0n, high = 1n;
-            while (polyHedralIndex(Number(high), t) <= n) high *= 2n;
+            while (polyHedralIndex(high, t) <= n) high *= 2n;
             low = high / 2n;
             while (low + 1n < high) {
                 let mid = (low + high) / 2n;
-                if (polyHedralIndex(Number(mid), t) <= n) low = mid;
+                if (polyHedralIndex(mid, t) <= n) low = mid;
                 else high = mid;
             }
-            return Number(low);
+            return low;
+        }
+
+        function getCoordsFromIndex(k, d, signed) {
+            k = BigInt(k);
+            let r = k, p = [];
+            let steps = [];
+
+            for (let t = d; t > 0; t--) {
+                const x = approximate(r, t);
+                p.push(x);
+                const term = polyHedralIndex(x, t);
+                steps.push({ t, x, term, r_before: r, r_after: r - term });
+                r -= term;
+            }
+
+            let a = [];
+            for (let i = 0; i < d - 1; i++) a.push(p[i] - p[i + 1]);
+            a.push(p[d - 1]);
+
+            let final = [...a];
+            if (signed) {
+                final = final.map(n => zigzagDecode(n));
+            }
+            
+            return { coords: final, raw_coords: a, steps: steps, magnitudes: p };
         }
 
         /** UI Engine **/
@@ -233,10 +431,14 @@
         function renderCoords() {
             const tokens = coordContainer.querySelectorAll('.coord-pill');
             tokens.forEach(t => t.remove());
+            
             currentCoords.forEach((val, idx) => {
                 const pill = document.createElement('div');
                 pill.className = 'coord-pill mono font-bold';
-                pill.innerHTML = `<span class="text-sky-400 mr-2">${val}</span><button onclick="removeCoord(${idx})" class="text-slate-500 hover:text-red-400">×</button>`;
+                pill.innerHTML = `
+                    <span class="text-sky-400 mr-2 border-b border-transparent">${val}</span>
+                    <button onclick="removeCoord(${idx})" class="text-slate-500 hover:text-red-400">×</button>
+                `;
                 coordContainer.insertBefore(pill, coordInput);
             });
             calculateFromCoords();
@@ -261,8 +463,8 @@
             const numbers = text.match(/-?\d+/g);
             if (numbers) {
                 numbers.forEach(n => {
-                    const val = parseInt(n);
-                    if (!isNaN(val)) currentCoords.push(val);
+                    const val = BigInt(n); 
+                    currentCoords.push(val);
                 });
                 coordInput.value = '';
                 renderCoords();
@@ -270,12 +472,13 @@
         });
 
         function addCoordinate(raw) {
-            const val = parseInt(raw.trim());
-            if (!isNaN(val)) {
+            if (raw.trim() === '') return;
+            try {
+                const val = BigInt(raw.trim());
                 currentCoords.push(val);
                 coordInput.value = '';
                 renderCoords();
-            }
+            } catch(e) {}
         }
 
         fromSigned.addEventListener('change', calculateFromCoords);
@@ -294,11 +497,13 @@
             if (fromSigned.checked) {
                 processed = processed.map(z => zigzagEncode(z));
                 addStep(stepsDiv, "Pre-processing", `Signed inputs mapped to non-negative space via ZigZag: [${processed.join(', ')}]`);
+            } else {
+                 processed = processed.map(z => BigInt(z));
             }
 
             const t = processed.length;
-            const c = new Array(t).fill(0);
-            let s = 0;
+            const c = new Array(t).fill(0n);
+            let s = 0n;
             for (let i = t - 1; i >= 0; i--) { s += processed[i]; c[i] = s; }
             addStep(stepsDiv, "Magnitudes (Suffix Sums)", `Calculated suffix sums (m values) for each dimension: [${c.join(', ')}]`);
 
@@ -308,7 +513,7 @@
                 const magnitude = c[i];
                 const term = polyHedralIndex(magnitude, dimIndex);
                 total += term;
-                addStep(stepsDiv, `Dimensional Term (d=${dimIndex})`, `Calculating polyhedral index for magnitude <b>m=${magnitude}</b> and dimension <b>d=${dimIndex}</b>:<br><span class="mono">nCr(${magnitude} + ${dimIndex} - 1, ${dimIndex})</span> = <span class="text-sky-300 font-bold font-mono">${term}</span>`);
+                addStep(stepsDiv, `Dimensional Term (d=${dimIndex})`, `Calculating polyhedral index for magnitude <b>m=${magnitude}</b> and dimension <b>d=${dimIndex}</b>:<br><span class="mono">nCr(${magnitude} + ${dimIndex} - 1, ${dimIndex})</span> = <span class="text-sky-300 font-bold font-mono text-xs md:text-sm break-all">${term}</span>`);
             }
             resultIdx.innerText = total.toString();
         }
@@ -316,61 +521,255 @@
         function calculateToCoords() {
             const kStr = document.getElementById('input-k').value || "0";
             const k = BigInt(kStr);
-            const d = parseInt(document.getElementById('input-d').value || 1);
-            const stepsDiv = document.getElementById('to-steps');
-            const resultLabel = document.getElementById('result-coords');
-            stepsDiv.innerHTML = '';
-
-            let r = k, p = [];
-            for (let t = d; t > 0; t--) {
-                const x = approximate(r, t);
-                p.push(x);
-                const term = polyHedralIndex(x, t);
-                addStep(stepsDiv, `Magnitude Finding (d=${t})`, `Searching for max magnitude <b>p<sub>${d-t}</sub></b> where <span class="mono text-xs">nCr(m+${t}-1, ${t}) ≤ ${r}</span>.<br>Magnitude discovered: <b>m=${x}</b> (Index value: ${term}). Remainder: ${r - term}`);
-                r -= term;
-            }
-
-            addStep(stepsDiv, "Coordinate Derivation", `Calculating final coordinates by subtracting consecutive magnitudes: <span class="mono">a<sub>i</sub> = p<sub>i</sub> - p<sub>i+1</sub></span>`);
+            const dInput = parseInt(document.getElementById('input-d').value || 1);
+            const d = Math.min(dInput, 9999);
+            const signed = toSigned.checked;
             
-            let a = [];
+            const stepsDiv = document.getElementById('to-steps');
+            const hiddenStepsDiv = document.getElementById('to-steps-hidden');
+            const showMoreBtn = document.getElementById('btn-show-more');
+            const resultLabel = document.getElementById('result-coords');
+            
+            stepsDiv.innerHTML = '';
+            hiddenStepsDiv.innerHTML = '';
+            hiddenStepsDiv.classList.add('hidden');
+            showMoreBtn.classList.add('hidden');
+            showMoreBtn.innerText = "Show More Steps";
+
+            const data = getCoordsFromIndex(k, d, signed);
+
+            // 1. TOP: Add Result Coords (with decoding if needed)
+            if (signed) {
+                addStep(stepsDiv, "Coordinate Result", `ZigZag decoded signed array: <b>[${data.coords.join(', ')}]</b>`);
+            }
+            addStep(stepsDiv, "Non-Negative Result", `Raw non-negative coordinate array: <b>[${data.raw_coords.join(', ')}]</b>`);
+            
+            // 2. TOP: Add Subtraction Steps
+            const p = data.magnitudes;
             const deriveDetails = [];
             for (let i = 0; i < d - 1; i++) {
-                const coordVal = p[i] - p[i+1];
-                a.push(coordVal);
-                deriveDetails.push(`Coord ${i+1}: ${p[i]} - ${p[i+1]} = <b>${coordVal}</b>`);
+                deriveDetails.push(`a<sub>${i}</sub> = p<sub>${i}</sub> - p<sub>${i+1}</sub> = ${p[i]} - ${p[i+1]} = <b>${data.raw_coords[i]}</b>`);
             }
-            a.push(p[d - 1]);
-            deriveDetails.push(`Coord ${d}: (Last magnitude) = <b>${p[d-1]}</b>`);
+            deriveDetails.push(`a<sub>${d-1}</sub> = p<sub>${d-1}</sub> = <b>${data.raw_coords[d-1]}</b>`);
             
             addStep(stepsDiv, "Subtraction Steps", `<div class="space-y-1 text-xs opacity-80">${deriveDetails.join('<br>')}</div>`);
 
-            if (toSigned.checked) {
-                const raw = [...a];
-                a = a.map(n => zigzagDecode(n));
-                addStep(stepsDiv, "Final Decoding", `ZigZag decoded non-negative values [${raw.join(', ')}] back to signed space: [${a.join(', ')}]`);
+            // 3. MIDDLE/BOTTOM: Magnitude Finding Steps
+            data.steps.forEach((step, index) => {
+                const { t, x, term, r_before, r_after } = step;
+                const html = `<h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Magnitude Finding (d=${t})</h4><div class="text-slate-300 text-sm leading-relaxed">Searching for max magnitude <b>p<sub>${d - t}</sub></b> where <span class="mono text-xs">nCr(m+${t}-1, ${t}) ≤ ${r_before}</span>.<br>Magnitude discovered: <b>m=${x}</b> (Index value: ${term}). Remainder: ${r_after}</div>`;
+                const div = document.createElement('div');
+                div.className = 'step-card p-4 rounded-xl border-l-4';
+                div.innerHTML = html;
+                if (index < 5) stepsDiv.appendChild(div);
+                else hiddenStepsDiv.appendChild(div);
+            });
+
+            if (data.steps.length > 5) {
+                showMoreBtn.classList.remove('hidden');
+                showMoreBtn.innerText = `Show ${data.steps.length - 5} More Steps`;
             }
-            resultLabel.innerText = `(${a.join(', ')})`;
+
+            resultLabel.innerText = `(${data.coords.join(', ')})`;
+        }
+
+        function toggleSteps() {
+            const hiddenDiv = document.getElementById('to-steps-hidden');
+            const btn = document.getElementById('btn-show-more');
+            if (hiddenDiv.classList.contains('hidden')) {
+                hiddenDiv.classList.remove('hidden');
+                btn.innerText = "Show Less";
+            } else {
+                hiddenDiv.classList.add('hidden');
+                const count = hiddenDiv.children.length;
+                btn.innerText = `Show ${count} More Steps`;
+            }
         }
 
         function addStep(container, title, body) {
             const div = document.createElement('div');
             div.className = 'step-card p-4 rounded-xl border-l-4';
-            div.innerHTML = `<h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">${title}</h4><div class="text-slate-300 text-sm leading-relaxed">${body}</div>`;
+            div.innerHTML = `<h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">${title}</h4><div class="text-slate-300 text-sm leading-relaxed break-words">${body}</div>`;
             container.appendChild(div);
         }
 
+        /** DEMO Logic **/
+        let demoK = 0n;
+        let demoInterval = null;
+        let isPlaying = false;
+
+        function toggleDemo() {
+            if (isPlaying) stopDemo();
+            else startDemo();
+        }
+
+        function startDemo() {
+            isPlaying = true;
+            document.getElementById('btn-play-text').innerText = "Pause Counting";
+            document.getElementById('icon-play').classList.add('hidden');
+            document.getElementById('icon-pause').classList.remove('hidden');
+            document.getElementById('demo-status').innerText = "Running";
+            document.getElementById('demo-status').className = "text-xs uppercase font-bold text-emerald-400";
+            document.getElementById('demo-indicator').style.display = 'block';
+
+            const speedVal = parseInt(document.getElementById('demo-speed').value);
+            const delays = [1000, 500, 250, 100, 50, 10];
+            const delay = delays[speedVal] || 1000;
+
+            if (demoInterval) clearInterval(demoInterval);
+            demoInterval = setInterval(updateDemoLoop, delay);
+        }
+
+        function stopDemo() {
+            isPlaying = false;
+            if (demoInterval) clearInterval(demoInterval);
+            document.getElementById('btn-play-text').innerText = "Resume Counting";
+            document.getElementById('icon-play').classList.remove('hidden');
+            document.getElementById('icon-pause').classList.add('hidden');
+            document.getElementById('demo-status').innerText = "Paused";
+            document.getElementById('demo-status').className = "text-xs uppercase font-bold text-amber-400";
+            document.getElementById('demo-indicator').style.display = 'none';
+        }
+
+        function resetDemo() {
+            stopDemo();
+            demoK = 0n;
+            document.getElementById('btn-play-text').innerText = "Start Counting";
+            updateDemoDisplay();
+        }
+
+        function updateDemoLoop() {
+            demoK++;
+            updateDemoDisplay();
+        }
+        
+        document.getElementById('demo-speed').addEventListener('input', () => {
+            if (isPlaying) startDemo();
+        });
+
+        function updateDemoDisplay() {
+            const dInput = parseInt(document.getElementById('demo-d').value) || 1;
+            const d = Math.min(dInput, 9999);
+            const signed = document.getElementById('demo-signed').checked;
+            const data = getCoordsFromIndex(demoK, d, signed);
+            let algSum = 0n;
+            data.coords.forEach(n => algSum += n);
+
+            document.getElementById('demo-output').innerText = `k = ${demoK}`;
+            document.getElementById('demo-coords').innerText = `[${data.coords.join(', ')}]`;
+            document.getElementById('demo-sum').innerText = algSum.toString();
+        }
+
+        async function downloadCSV() {
+            const dInput = parseInt(document.getElementById('csv-d').value) || 1;
+            const d = Math.min(dInput, 9999);
+            const start = BigInt(document.getElementById('csv-start').value || 0);
+            const end = BigInt(document.getElementById('csv-end').value || 100);
+            const signed = document.getElementById('csv-signed').checked;
+
+            if (end < start) {
+                alert("End index must be greater than or equal to start index.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-csv');
+            const btnText = document.getElementById('btn-csv-text');
+            const progressContainer = document.getElementById('csv-progress-container');
+            const progressFill = document.getElementById('csv-progress-fill');
+            const statusText = document.getElementById('csv-status');
+
+            btn.disabled = true;
+            btnText.innerText = "Generating...";
+            progressContainer.style.display = 'block';
+            statusText.style.display = 'block';
+            progressFill.style.width = '0%';
+            
+            let headers = ["Index"];
+            for(let i=0; i<d; i++) headers.push(`Dim_${i+1}`);
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+            
+            const totalRows = end - start + 1n;
+            let processed = 0n;
+            let currentK = start;
+            
+            const processChunk = () => {
+                const chunkSize = 200n; 
+                let count = 0n;
+
+                while (count < chunkSize && currentK <= end) {
+                    const data = getCoordsFromIndex(currentK, d, signed);
+                    const row = [currentK.toString(), ...data.coords];
+                    csvContent += row.join(",") + "\n";
+                    currentK++;
+                    count++;
+                    processed++;
+                }
+
+                const percent = Number((processed * 100n) / totalRows);
+                progressFill.style.width = `${percent}%`;
+                statusText.innerText = `Processed ${processed} / ${totalRows}`;
+
+                if (currentK <= end) {
+                    setTimeout(processChunk, 0); 
+                } else {
+                    finishCSV(csvContent, start, end, d);
+                }
+            };
+
+            setTimeout(processChunk, 10);
+        }
+
+        function finishCSV(content, start, end, d) {
+            const encodedUri = encodeURI(content);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `polyhedral_data_${start}_to_${end}_d${d}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            const btn = document.getElementById('btn-csv');
+            const btnText = document.getElementById('btn-csv-text');
+            const progressContainer = document.getElementById('csv-progress-container');
+            const statusText = document.getElementById('csv-status');
+
+            btn.disabled = false;
+            btnText.innerText = "Download CSV";
+            progressContainer.style.display = 'none';
+            statusText.style.display = 'none';
+        }
+
         function switchTab(tab) {
-            const bF = document.getElementById('tab-from'), bT = document.getElementById('tab-to');
-            const sF = document.getElementById('screen-from'), sT = document.getElementById('screen-to');
-            const active = "bg-sky-600 text-white shadow-lg shadow-sky-900/20 px-8 py-2.5 rounded-xl font-semibold transition-all";
-            const inactive = "px-8 py-2.5 rounded-xl font-semibold transition-all text-slate-400 hover:text-white";
+            const bF = document.getElementById('tab-from');
+            const bT = document.getElementById('tab-to');
+            const bD = document.getElementById('tab-demo');
+            
+            const sF = document.getElementById('screen-from');
+            const sT = document.getElementById('screen-to');
+            const sD = document.getElementById('screen-demo');
+
+            const baseClass = "px-6 py-2.5 rounded-xl font-semibold btn-tab";
+            const inactiveClass = baseClass + " btn-tab-inactive";
+            
+            bF.className = inactiveClass;
+            bT.className = inactiveClass;
+            bD.className = inactiveClass;
+
+            sF.classList.add('hidden');
+            sT.classList.add('hidden');
+            sD.classList.add('hidden');
+
             if (tab === 'from') {
-                bF.className = active; bT.className = inactive;
-                sF.classList.remove('hidden'); sT.classList.add('hidden');
-            } else {
-                bT.className = active.replace('sky', 'emerald'); bF.className = inactive;
-                sT.classList.remove('hidden'); sF.classList.add('hidden');
+                bF.className = baseClass + " btn-tab-active-sky";
+                sF.classList.remove('hidden');
+            } else if (tab === 'to') {
+                bT.className = baseClass + " btn-tab-active-emerald";
+                sT.classList.remove('hidden');
                 calculateToCoords();
+            } else if (tab === 'demo') {
+                bD.className = baseClass + " btn-tab-active-violet";
+                sD.classList.remove('hidden');
+                updateDemoDisplay();
             }
         }
 
