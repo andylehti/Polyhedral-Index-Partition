@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multidimensional Indexing Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+        
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        input:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+        .coord-pill {
+            display: inline-flex;
+            align-items: center;
+            background: #1e293b;
+            padding: 6px 14px;
+            border-radius: 10px;
+            margin: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .step-card {
+            border-left: 4px solid #38bdf8;
+            background: rgba(56, 189, 248, 0.03);
+            transition: transform 0.2s;
+            overflow-wrap: anywhere;
+            word-break: break-all;
+        }
+        .step-card:hover {
+            transform: translateX(4px);
+            background: rgba(56, 189, 248, 0.06);
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .footer-arial {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        
+        /* Hide scrollbar but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400 mb-2">Polyhedral Indexer</h1>
+            <p class="text-slate-400 max-w-lg mx-auto">Efficiently map multidimensional coordinate arrays to unique natural number indices.</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="flex space-x-1 mb-8 bg-slate-800/40 p-1.5 rounded-2xl w-fit mx-auto border border-white/5">
+            <button id="tab-from" onclick="switchTab('from')" class="px-8 py-2.5 rounded-xl font-semibold transition-all bg-sky-600 text-white shadow-lg shadow-sky-900/20">Coords ➔ Index</button>
+            <button id="tab-to" onclick="switchTab('to')" class="px-8 py-2.5 rounded-xl font-semibold transition-all text-slate-400 hover:text-white">Index ➔ Coords</button>
+        </div>
+
+        <!-- Coords to Index Screen -->
+        <div id="screen-from" class="space-y-6">
+            <div class="glass p-6 md:p-8 rounded-3xl shadow-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <span class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center mr-3 text-sm">01</span>
+                        Coordinate Input
+                    </h2>
+                    <button onclick="clearCoords()" class="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-red-400 transition-colors">Clear All</button>
+                </div>
+                
+                <div id="coord-container" class="flex flex-wrap items-center p-3 rounded-2xl border-2 border-slate-700/50 bg-slate-900/40 min-h-[72px] transition-all focus-within:border-sky-500/50">
+                    <!-- Tokens injected here -->
+                    <input type="text" id="coord-input" class="bg-transparent border-none focus:ring-0 text-white w-full min-w-[120px] flex-1 p-2 mono text-lg" placeholder="Enter or paste values...">
+                </div>
+
+                <div class="mt-6 flex items-center space-x-6 border-t border-white/5 pt-6">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="from-signed" class="w-5 h-5 rounded-lg border-slate-600 text-sky-500 focus:ring-sky-500 bg-slate-800 transition-all group-hover:scale-110">
+                        <span class="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">Signed Mode (ZigZag Encoding)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="from-results" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="glass p-8 rounded-3xl border-sky-500/30 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <div class="text-center py-6">
+                        <span class="text-slate-500 uppercase tracking-[0.2em] text-xs font-black">Computed Index</span>
+                        <div id="result-index" class="text-6xl font-mono font-bold text-sky-400 mt-3 break-all cursor-pointer hover:scale-105 transition-transform" onclick="copyText(this.innerText)">0</div>
+                        <p class="text-xs text-slate-500 mt-4">Click index to copy</p>
+                    </div>
+                    
+                    <div class="mt-10 border-t border-white/5 pt-8">
+                        <h3 class="font-bold text-slate-200 mb-6 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            Algorithm Trace
+                        </h3>
+                        <div id="from-steps" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Index to Coords Screen -->
+        <div id="screen-to" class="hidden space-y-6">
+            <div class="glass p-8 rounded-3xl shadow-2xl">
+                <h2 class="text-xl font-bold mb-6 flex items-center">
+                    <span class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mr-3 text-sm">01</span>
+                    Inverse Parameters
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Index (k)</label>
+                        <input type="number" id="input-k" class="w-full p-4 rounded-2xl mono text-xl font-bold" placeholder="0" value="0" min="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Dimensions (d)</label>
+                        <input type="number" id="input-d" class="w-full p-4 rounded-2xl mono text-xl font-bold" placeholder="1" value="2" min="1">
+                    </div>
+                </div>
+                <div class="mt-8 flex items-center space-x-6 border-t border-white/5 pt-6">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <input type="checkbox" id="to-signed" class="w-5 h-5 rounded-lg border-slate-600 text-emerald-500 focus:ring-emerald-500 bg-slate-800 transition-all group-hover:scale-110">
+                        <span class="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">Signed Mode (ZigZag Encoding)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="to-results" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="glass p-8 rounded-3xl border-emerald-500/30 shadow-2xl">
+                    <div class="text-center py-6">
+                        <span class="text-slate-500 uppercase tracking-[0.2em] text-xs font-black">Coordinates Array</span>
+                        <div id="result-coords" class="text-4xl font-mono font-bold text-emerald-400 mt-3 break-all cursor-pointer hover:scale-105 transition-transform" onclick="copyText(this.innerText)">(0, 0)</div>
+                        <p class="text-xs text-slate-500 mt-4">Click coordinates to copy</p>
+                    </div>
+                    
+                    <div class="mt-10 border-t border-white/5 pt-8">
+                        <h3 class="font-bold text-slate-200 mb-6 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            Partitioning Steps
+                        </h3>
+                        <div id="to-steps" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="mt-12 text-center text-slate-500 text-sm font-medium pb-12 space-y-2 footer-arial">
+            <div>© Andrew Lehti, Polyhedral Index Partition, Multidimensional Indexing Explorer</div>
+            <div>
+                DOI: <a href="https://bit.ly/4qKELCg" target="_blank" class="hover:text-sky-400 transition-colors">10.6084/m9.figshare.27642783</a>
+            </div>
+            <div>
+                Github: <a href="https://bit.ly/49r5FI4" target="_blank" class="hover:text-sky-400 transition-colors">https://github.com/andylehti/Polyhedral-Index-Partition</a>
+            </div>
+            <div class="pt-2 text-xs opacity-70">
+                <a href="https://bit.ly/3NwUd6l" target="_blank" class="hover:text-sky-400 transition-colors">Colab Notebook</a> | 
+                <a href="https://bit.ly/4qKHlYU" target="_blank" class="hover:text-sky-400 transition-colors">Author Research</a> | 
+                <a href="https://bit.ly/49EmS25" target="_blank" class="hover:text-sky-400 transition-colors">Author Academia</a> | 
+                <a href="https://bit.ly/49athC3" target="_blank" class="hover:text-sky-400 transition-colors">Metopedia.com</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Notification system for copy -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-6 py-2 rounded-full font-bold shadow-2xl opacity-0 transition-opacity pointer-events-none z-50">Copied!</div>
+
+    <script>
+        /** Logic Core **/
+        function nCr(n, r) {
+            if (r < 0 || r > n) return 0n;
+            if (r === 0 || r === n) return 1n;
+            if (r > n / 2) r = n - r;
+            let num = 1n, den = 1n;
+            for (let i = 1n; i <= BigInt(r); i++) {
+                num *= (BigInt(n) - i + 1n);
+                den *= i;
+            }
+            return num / den;
+        }
+
+        function polyHedralIndex(x, y) {
+            return (y < 1 || x < 0) ? 0n : nCr(x + y - 1, y);
+        }
+
+        function zigzagEncode(z) { return z >= 0 ? 2 * z : -2 * z - 1; }
+        function zigzagDecode(n) { return n % 2 === 0 ? n / 2 : -(Math.floor(n / 2) + 1); }
+
+        function approximate(n, t) {
+            n = BigInt(n);
+            if (n === 0n) return 0;
+            let low = 0n, high = 1n;
+            while (polyHedralIndex(Number(high), t) <= n) high *= 2n;
+            low = high / 2n;
+            while (low + 1n < high) {
+                let mid = (low + high) / 2n;
+                if (polyHedralIndex(Number(mid), t) <= n) low = mid;
+                else high = mid;
+            }
+            return Number(low);
+        }
+
+        /** UI Engine **/
+        let currentCoords = [];
+        const coordInput = document.getElementById('coord-input');
+        const coordContainer = document.getElementById('coord-container');
+        const fromSigned = document.getElementById('from-signed');
+        const toSigned = document.getElementById('to-signed');
+
+        function renderCoords() {
+            const tokens = coordContainer.querySelectorAll('.coord-pill');
+            tokens.forEach(t => t.remove());
+            currentCoords.forEach((val, idx) => {
+                const pill = document.createElement('div');
+                pill.className = 'coord-pill mono font-bold';
+                pill.innerHTML = `<span class="text-sky-400 mr-2">${val}</span><button onclick="removeCoord(${idx})" class="text-slate-500 hover:text-red-400">×</button>`;
+                coordContainer.insertBefore(pill, coordInput);
+            });
+            calculateFromCoords();
+        }
+
+        function removeCoord(idx) { currentCoords.splice(idx, 1); renderCoords(); }
+        function clearCoords() { currentCoords = []; renderCoords(); }
+
+        coordInput.addEventListener('keydown', (e) => {
+            if ([' ', ',', 'Enter'].includes(e.key)) {
+                e.preventDefault();
+                addCoordinate(coordInput.value);
+            } else if (e.key === 'Backspace' && coordInput.value === '' && currentCoords.length > 0) {
+                currentCoords.pop();
+                renderCoords();
+            }
+        });
+
+        coordInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            const numbers = text.match(/-?\d+/g);
+            if (numbers) {
+                numbers.forEach(n => {
+                    const val = parseInt(n);
+                    if (!isNaN(val)) currentCoords.push(val);
+                });
+                coordInput.value = '';
+                renderCoords();
+            }
+        });
+
+        function addCoordinate(raw) {
+            const val = parseInt(raw.trim());
+            if (!isNaN(val)) {
+                currentCoords.push(val);
+                coordInput.value = '';
+                renderCoords();
+            }
+        }
+
+        fromSigned.addEventListener('change', calculateFromCoords);
+
+        function calculateFromCoords() {
+            const resDiv = document.getElementById('from-results');
+            const stepsDiv = document.getElementById('from-steps');
+            const resultIdx = document.getElementById('result-index');
+            
+            if (currentCoords.length === 0) { resDiv.classList.add('hidden'); return; }
+
+            resDiv.classList.remove('hidden');
+            stepsDiv.innerHTML = '';
+
+            let processed = [...currentCoords];
+            if (fromSigned.checked) {
+                processed = processed.map(z => zigzagEncode(z));
+                addStep(stepsDiv, "Pre-processing", `Signed inputs mapped to non-negative space via ZigZag: [${processed.join(', ')}]`);
+            }
+
+            const t = processed.length;
+            const c = new Array(t).fill(0);
+            let s = 0;
+            for (let i = t - 1; i >= 0; i--) { s += processed[i]; c[i] = s; }
+            addStep(stepsDiv, "Magnitudes (Suffix Sums)", `Calculated suffix sums (m values) for each dimension: [${c.join(', ')}]`);
+
+            let total = 0n;
+            for (let i = 0; i < t; i++) {
+                const dimIndex = t - i;
+                const magnitude = c[i];
+                const term = polyHedralIndex(magnitude, dimIndex);
+                total += term;
+                addStep(stepsDiv, `Dimensional Term (d=${dimIndex})`, `Calculating polyhedral index for magnitude <b>m=${magnitude}</b> and dimension <b>d=${dimIndex}</b>:<br><span class="mono">nCr(${magnitude} + ${dimIndex} - 1, ${dimIndex})</span> = <span class="text-sky-300 font-bold font-mono">${term}</span>`);
+            }
+            resultIdx.innerText = total.toString();
+        }
+
+        function calculateToCoords() {
+            const kStr = document.getElementById('input-k').value || "0";
+            const k = BigInt(kStr);
+            const d = parseInt(document.getElementById('input-d').value || 1);
+            const stepsDiv = document.getElementById('to-steps');
+            const resultLabel = document.getElementById('result-coords');
+            stepsDiv.innerHTML = '';
+
+            let r = k, p = [];
+            for (let t = d; t > 0; t--) {
+                const x = approximate(r, t);
+                p.push(x);
+                const term = polyHedralIndex(x, t);
+                addStep(stepsDiv, `Magnitude Finding (d=${t})`, `Searching for max magnitude <b>p<sub>${d-t}</sub></b> where <span class="mono text-xs">nCr(m+${t}-1, ${t}) ≤ ${r}</span>.<br>Magnitude discovered: <b>m=${x}</b> (Index value: ${term}). Remainder: ${r - term}`);
+                r -= term;
+            }
+
+            addStep(stepsDiv, "Coordinate Derivation", `Calculating final coordinates by subtracting consecutive magnitudes: <span class="mono">a<sub>i</sub> = p<sub>i</sub> - p<sub>i+1</sub></span>`);
+            
+            let a = [];
+            const deriveDetails = [];
+            for (let i = 0; i < d - 1; i++) {
+                const coordVal = p[i] - p[i+1];
+                a.push(coordVal);
+                deriveDetails.push(`Coord ${i+1}: ${p[i]} - ${p[i+1]} = <b>${coordVal}</b>`);
+            }
+            a.push(p[d - 1]);
+            deriveDetails.push(`Coord ${d}: (Last magnitude) = <b>${p[d-1]}</b>`);
+            
+            addStep(stepsDiv, "Subtraction Steps", `<div class="space-y-1 text-xs opacity-80">${deriveDetails.join('<br>')}</div>`);
+
+            if (toSigned.checked) {
+                const raw = [...a];
+                a = a.map(n => zigzagDecode(n));
+                addStep(stepsDiv, "Final Decoding", `ZigZag decoded non-negative values [${raw.join(', ')}] back to signed space: [${a.join(', ')}]`);
+            }
+            resultLabel.innerText = `(${a.join(', ')})`;
+        }
+
+        function addStep(container, title, body) {
+            const div = document.createElement('div');
+            div.className = 'step-card p-4 rounded-xl border-l-4';
+            div.innerHTML = `<h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">${title}</h4><div class="text-slate-300 text-sm leading-relaxed">${body}</div>`;
+            container.appendChild(div);
+        }
+
+        function switchTab(tab) {
+            const bF = document.getElementById('tab-from'), bT = document.getElementById('tab-to');
+            const sF = document.getElementById('screen-from'), sT = document.getElementById('screen-to');
+            const active = "bg-sky-600 text-white shadow-lg shadow-sky-900/20 px-8 py-2.5 rounded-xl font-semibold transition-all";
+            const inactive = "px-8 py-2.5 rounded-xl font-semibold transition-all text-slate-400 hover:text-white";
+            if (tab === 'from') {
+                bF.className = active; bT.className = inactive;
+                sF.classList.remove('hidden'); sT.classList.add('hidden');
+            } else {
+                bT.className = active.replace('sky', 'emerald'); bF.className = inactive;
+                sT.classList.remove('hidden'); sF.classList.add('hidden');
+                calculateToCoords();
+            }
+        }
+
+        function copyText(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            const toast = document.getElementById('toast');
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2000);
+        }
+
+        document.getElementById('input-k').addEventListener('input', calculateToCoords);
+        document.getElementById('input-d').addEventListener('input', calculateToCoords);
+        toSigned.addEventListener('change', calculateToCoords);
+        renderCoords();
+    </script>
+</body>
+</html>
